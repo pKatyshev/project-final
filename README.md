@@ -32,3 +32,4 @@
 - Тесты переведены на H2
 - Написаны тесты для ProfileRestController
 - Рефакторинг метода upload в классе FileUtil
+- Добавлены Dockerfile и docker-compose
