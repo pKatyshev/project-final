@@ -33,3 +33,4 @@
 - Написаны тесты для ProfileRestController
 - Рефакторинг метода upload в классе FileUtil
 - Добавлены Dockerfile и docker-compose
+- Добавлен подсчет времени сколько задача находилась в работе и тестировании. 2 метода в классе ActivityService

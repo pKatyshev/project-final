@@ -3,11 +3,14 @@ package com.javarush.jira.bugtracking.task;
 import com.javarush.jira.bugtracking.Handlers;
 import com.javarush.jira.bugtracking.task.to.ActivityTo;
 import com.javarush.jira.common.error.DataConflictException;
+import com.javarush.jira.common.error.NotFoundException;
 import com.javarush.jira.login.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.javarush.jira.bugtracking.task.TaskUtil.getLatestValue;
@@ -18,6 +21,8 @@ public class ActivityService {
     private final TaskRepository taskRepository;
 
     private final Handlers.ActivityHandler handler;
+
+    private final ActivityRepository activityRepository;
 
     private static void checkBelong(HasAuthorId activity) {
         if (activity.getAuthorId() != AuthUser.authId()) {
@@ -72,5 +77,41 @@ public class ActivityService {
                 task.setTypeCode(latestType);
             }
         }
+    }
+
+    public Duration inProgressTime(long taskId) {
+        List<Activity> activityByTask = activityRepository.findAllByTaskIdOrderByUpdatedDesc(taskId);
+
+        LocalDateTime readyForReview = activityByTask
+                .stream()
+                .filter(s -> s.getStatusCode().equals("ready_for_review"))
+                .findFirst().orElseThrow(NullPointerException::new)
+                .getUpdated();
+
+        LocalDateTime inProgress = activityByTask
+                .stream()
+                .filter(s -> s.getStatusCode().equals("in_progress"))
+                .findFirst().orElseThrow(NullPointerException::new)
+                .getUpdated();
+
+        return Duration.between(readyForReview, inProgress);
+    }
+
+    public Duration inTestTime(long taskId) {
+        List<Activity> activityByTask = activityRepository.findAllByTaskIdOrderByUpdatedDesc(taskId);
+
+        LocalDateTime done = activityByTask
+                .stream()
+                .filter(s -> s.getStatusCode().equals("done"))
+                .findFirst().orElseThrow(NullPointerException::new)
+                .getUpdated();
+
+        LocalDateTime readyForReview = activityByTask
+                .stream()
+                .filter(s -> s.getStatusCode().equals("ready_for_review"))
+                .findFirst().orElseThrow(NullPointerException::new)
+                .getUpdated();
+
+        return Duration.between(done, readyForReview);
     }
 }
